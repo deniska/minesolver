@@ -21,3 +21,5 @@ windows xp (may also work with windows 9x minesweeper, untested).
 You need a whatever python version and a whatever pyautogui version installed.
 
 ## Video
+
+https://github.com/user-attachments/assets/97dfc6d6-290f-49ca-aaf9-530ea518d68b
