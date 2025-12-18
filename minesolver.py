@@ -1,5 +1,7 @@
+import subprocess
 import random
 import sys
+import re
 
 import pyautogui
 
@@ -8,6 +10,7 @@ pyautogui.PAUSE = 0.01
 colors = {
     (192, 192, 192): None,
     (255, 255, 255): None,
+    (142, 142, 142): 0,
     (128, 128, 128): 0,
     (  0,   0, 255): 1,
     (  0, 128,   0): 2,
@@ -21,20 +24,10 @@ colors = {
 }
 
 def main():
-    try:
-        top_left = pyautogui.locateOnScreen('topleft.png')
-        bottom_right = pyautogui.locateOnScreen('bottomright.png')
-    except pyautogui.ImageNotFoundException:
+    region = find_window_using_xwininfo()
+    if not region:
         print('Could not find minesweeper window')
         return 1
-
-    region = (
-        top_left.left + 13,
-        top_left.top + 11,
-        bottom_right.left + 11,
-        bottom_right.top + 10,
-    )
-
     tile_size = 24
 
     left = region[0]
@@ -154,6 +147,47 @@ class Field:
                 if self[x, y] == None:
                     spots.append((x, y))
         return random.choice(spots)
+
+
+def find_window_by_images():
+    try:
+        top_left = pyautogui.locateOnScreen('topleft.png')
+        bottom_right = pyautogui.locateOnScreen('bottomright.png')
+    except pyautogui.ImageNotFoundException:
+        return None
+
+    region = (
+        top_left.left + 13,
+        top_left.top + 11,
+        bottom_right.left + 11,
+        bottom_right.top + 10,
+    )
+
+    return region
+
+
+def find_window_using_xwininfo():
+    r = subprocess.run(['xwininfo', '-name', 'Minesweeper', '-tree'],
+                        stdout=subprocess.PIPE, encoding='utf-8', check=True)
+    for line in r.stdout.splitlines():
+        if m := re.search(r'(\d+)x(\d+)\+(\d+)\+(\d+)  \+(\d+)\+(\d+)', line):
+            client_width = int(m[1])
+            client_height = int(m[2])
+            client_left = int(m[5])
+            client_top = int(m[6])
+            break
+    else:
+        return None
+
+    region = (
+        client_left + 18,
+        client_top + 112,
+        client_left + client_width - 12,
+        client_top + client_height - 12,
+    )
+
+    return region
+
 
 if __name__ == '__main__':
     sys.exit(main())
